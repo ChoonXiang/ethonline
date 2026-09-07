@@ -1,44 +1,61 @@
 # [project-name]
 
-An autonomous recovery agent for stateless APIs, built for ETHOnline.
+An autonomous recovery agent for stateless APIs, built for ETHOnline with Hedera,
+Chainlink CRE, and ENSv2.
 
-The [MVP contract](docs/mvp-contract.md) defines the backend scope, demo application,
-recovery rules, spending limits, partner requirements, and acceptance criteria.
-Task 1 is documented; application and partner integrations are not implemented yet.
+The [MVP contract](docs/mvp-contract.md) defines the recovery behavior and prize
+requirements. The [backend structure](docs/backend-structure.md) describes process
+boundaries and where subsequent tasks belong.
 
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+Task 1 defines the MVP. Task 2 provides a control API health endpoint, an idle
+recovery worker, a stateless demo API, local container configuration, and tests.
+Recovery logic and partner integrations are not implemented yet.
 
-## Getting Started
+## Run Locally
 
-First, run the development server:
+Use Node.js 22.18 or newer and pnpm 11.25.0 (pinned in `package.json`).
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install --frozen-lockfile
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The control API is at `http://localhost:3000/api/health`. It reports API liveness
+and `recoveryReady: false`; it does not claim partner connectivity.
+The original starter page is still at `/`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Run the independent processes in separate terminals:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+pnpm worker
+```
 
-## Learn More
+```bash
+pnpm demo:api
+```
 
-To learn more about Next.js, take a look at the following resources:
+The worker emits JSON startup/idle/shutdown events with `recoveryEnabled: false`.
+The demo responds at `http://127.0.0.1:4001/healthz` and `/api/message`.
+Stop it with Ctrl+C to create a local outage. `pnpm worker:dev` restarts the worker
+when its source changes.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+All three commands work with defaults. Optional worker/demo settings are listed
+in [.env.example](.env.example) and read from an ignored `.env.local` file.
+Partner credentials are not needed for the scaffold.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Check The Scaffold
 
-## Deploy on Vercel
+```bash
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm build
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+`typecheck` generates Next.js route types before checking TypeScript. Tests use
+local sockets and child processes, with no paid or external integration calls.
+The starter page's Google fonts require network access during `build`.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+See [local demo infrastructure](infra/demo/README.md) for Docker instructions.
+The local HTTP demo and mutable development image tag are not the final HTTPS,
+digest-pinned, paid hosting demonstration.

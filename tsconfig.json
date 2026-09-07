@@ -28,7 +28,8 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
-    "**/*.mts"
+    "**/*.mts",
+    "demo/**/*.mjs"
   ],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "workflows/cre/**"]
 }
