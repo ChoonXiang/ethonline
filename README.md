@@ -1,3 +1,11 @@
+# [project-name]
+
+An autonomous recovery agent for stateless APIs, built for ETHOnline.
+
+The [MVP contract](docs/mvp-contract.md) defines the backend scope, demo application,
+recovery rules, spending limits, partner requirements, and acceptance criteria.
+Task 1 is documented; application and partner integrations are not implemented yet.
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
