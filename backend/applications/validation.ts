@@ -34,7 +34,9 @@ export function validateRegistration(value: unknown, allowedOrigins: readonly st
 
   const displayName = read("displayName", 100).trim();
   // The MVP accepts ASCII .eth names; chain ownership is checked before arming.
-  const serviceName = read("serviceName", 253).toLowerCase();
+  const rawServiceName = read("serviceName", 253);
+  if (!/^[a-zA-Z0-9.-]+$/.test(rawServiceName)) invalid("serviceName");
+  const serviceName = rawServiceName.toLowerCase();
   const labels = serviceName.split(".");
   if (labels.length < 2 || labels.at(-1) !== "eth" || labels.some((label) =>
     !/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(label) || label.startsWith("xn--"),

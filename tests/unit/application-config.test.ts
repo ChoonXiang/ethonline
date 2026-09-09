@@ -19,6 +19,7 @@ test("application config fails closed for missing authentication or invalid allo
   for (const input of [
     {}, { ...env, CONTROL_API_TOKEN: "" }, { ...env, CONTROL_API_TOKEN: "short" },
     { ...env, CONTROL_API_TOKEN: "a".repeat(31) + " " },
+    { ...env, CONTROL_API_TOKEN: env.CONTROL_API_TOKEN + "\n" },
     { ...env, APPLICATION_ALLOWED_ORIGINS: "" },
     { ...env, APPLICATION_ALLOWED_ORIGINS: "*" },
     { ...env, APPLICATION_ALLOWED_ORIGINS: "http://primary.example" },

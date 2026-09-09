@@ -14,7 +14,7 @@ export class ApplicationConfigError extends Error {
   }
 }
 
-export function readApplicationConfig(env: NodeJS.ProcessEnv): ApplicationConfig {
+export function readApplicationConfig(env: Readonly<Record<string, string | undefined>>): ApplicationConfig {
   const ownerToken = env.CONTROL_API_TOKEN;
   if (!ownerToken || !/^[\x21-\x7e]{32,256}$/.test(ownerToken)) throw new ApplicationConfigError();
 

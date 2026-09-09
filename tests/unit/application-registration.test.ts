@@ -14,6 +14,13 @@ test("registration normalizes service names and origins before storing or compar
   assert.deepEqual(result, registration);
 });
 
+test("non-ASCII names cannot become accepted ASCII names through case normalization", () => {
+  for (const serviceName of ["\u212a.eth", "api.\u212a.eth", "caf\u00e9.eth"]) {
+    assert.throws(() => validateRegistration({ ...registration, serviceName }, allowedOrigins),
+      (error: unknown) => error instanceof ApplicationError && error.field === "serviceName");
+  }
+});
+
 test("registration rejects missing fields, unexpected fields, and caller-controlled recovery state", () => {
   const invalid: unknown[] = [null, [], true, "application"];
   for (const key of Object.keys(registration)) {
