@@ -3,6 +3,7 @@ import { registerApplication } from "../applications/registration";
 import { SqliteApplicationStore } from "../applications/sqlite-store";
 import { ApplicationError } from "../applications/types";
 import { ApplicationConfigError, readApplicationConfig, type ApplicationConfig } from "../config/applications";
+import { SqliteMonitoringStore } from "../monitoring/sqlite-store";
 
 const MAX_BODY_BYTES = 16_384;
 
@@ -98,5 +99,18 @@ export function getApplication(request: Request, applicationId: string) {
     const application = store.get(applicationId);
     if (!application) throw new HttpError(404, "application_not_found");
     return json({ application });
+  }));
+}
+
+export function getApplicationHealth(request: Request, applicationId: string) {
+  return withOwner(request, (config) => withStore(config, (store) => {
+    const application = store.get(applicationId);
+    if (!application) throw new HttpError(404, "application_not_found");
+    const monitoring = new SqliteMonitoringStore(config.databasePath);
+    try {
+      return json({ health: monitoring.get(application) });
+    } finally {
+      monitoring.close();
+    }
   }));
 }

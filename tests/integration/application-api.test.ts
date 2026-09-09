@@ -5,7 +5,9 @@ import { join } from "node:path";
 import { test, type TestContext } from "node:test";
 import { GET, POST } from "../../app/api/applications/route";
 import { GET as GET_ONE } from "../../app/api/applications/[applicationId]/route";
+import { GET as GET_HEALTH } from "../../app/api/applications/[applicationId]/health/route";
 import { GET as HEALTH } from "../../app/api/health/route";
+import { SqliteMonitoringStore } from "../../backend/monitoring/sqlite-store";
 import { registration } from "../helpers/applications";
 
 const ownerToken = "test-owner-token-0123456789abcdef0123456789";
@@ -48,6 +50,9 @@ test("all application routes authenticate before reading the body or opening sto
     assert.equal(incoming.bodyUsed, false);
     assert.equal((await GET(request("GET", undefined, { authorization }))).status, 401);
     assert.equal((await GET_ONE(request("GET", undefined, { authorization }), {
+      params: Promise.resolve({ applicationId: "unknown" }),
+    })).status, 401);
+    assert.equal((await GET_HEALTH(request("GET", undefined, { authorization }), {
       params: Promise.resolve({ applicationId: "unknown" }),
     })).status, 401);
   }
@@ -149,4 +154,26 @@ test("unknown application IDs return 404 and database errors do not expose local
   const failed = await GET(request());
   assert.equal(failed.status, 500);
   assert.deepEqual(await failed.json(), { error: { code: "internal_error" } });
+});
+
+test("health status reads persisted worker evidence and distinguishes an unchecked application", async (t) => {
+  const path = await configure(t);
+  const created = await POST(request("POST", JSON.stringify(registration)));
+  const { application } = await created.json();
+  const context = { params: Promise.resolve({ applicationId: application.applicationId }) };
+  const unchecked = await GET_HEALTH(request(), context);
+  assert.equal(unchecked.status, 200);
+  assert.equal((await unchecked.json()).health.status, "unknown");
+  const store = new SqliteMonitoringStore(path);
+  try {
+    const claim = store.claim(application, 1_000)!;
+    store.record(claim, { checkedAt: 1_000, healthy: false, instanceId: "", version: "", reason: "timeout" }, 3_000);
+  } finally { store.close(); }
+  const response = await GET_HEALTH(request(), context);
+  assert.equal(response.headers.get("cache-control"), "no-store");
+  const { health } = await response.json();
+  assert.equal(health.status, "degraded");
+  assert.equal(health.consecutiveFailures, 1);
+  assert.equal(health.lastCheck.reason, "timeout");
+  assert.equal((await GET_HEALTH(request(), { params: Promise.resolve({ applicationId: "unknown" }) })).status, 404);
 });

@@ -17,7 +17,12 @@ export class ApplicationConfigError extends Error {
 export function readApplicationConfig(env: Readonly<Record<string, string | undefined>>): ApplicationConfig {
   const ownerToken = env.CONTROL_API_TOKEN;
   if (!ownerToken || !/^[\x21-\x7e]{32,256}$/.test(ownerToken)) throw new ApplicationConfigError();
+  return { ownerToken, ...readApplicationStorageConfig(env) };
+}
 
+export function readApplicationStorageConfig(
+  env: Readonly<Record<string, string | undefined>>,
+): Pick<ApplicationConfig, "allowedOrigins" | "databasePath"> {
   const entries = env.APPLICATION_ALLOWED_ORIGINS?.split(",").map((entry) => entry.trim());
   if (!entries?.length) throw new ApplicationConfigError();
   const allowedOrigins = entries.map((entry) => {
@@ -31,5 +36,5 @@ export function readApplicationConfig(env: Readonly<Record<string, string | unde
     throw new ApplicationConfigError();
   }
 
-  return { ownerToken, allowedOrigins: [...new Set(allowedOrigins)], databasePath: resolve(databasePath) };
+  return { allowedOrigins: [...new Set(allowedOrigins)], databasePath: resolve(databasePath) };
 }

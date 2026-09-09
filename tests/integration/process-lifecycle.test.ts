@@ -6,10 +6,12 @@ for (const signal of ["SIGINT", "SIGTERM"] as const) {
   test(`worker starts without integrations and exits cleanly on ${signal}`, { timeout: 10_000 }, async (t) => {
     const worker = startProcess(t, ["--import", "tsx", "workers/recovery/main.ts"], {
       RECOVERY_WORKER_HEARTBEAT_MS: "1000",
+      APPLICATION_ALLOWED_ORIGINS: undefined,
     });
     const startup = await worker.ready;
     assert.equal(startup.event, "worker.started");
     assert.equal(startup.recoveryEnabled, false);
+    assert.equal(startup.monitoringEnabled, false);
     assert.equal(worker.child.kill(signal), true);
     assert.deepEqual(await worker.exited, { code: 0, signal: null });
   });

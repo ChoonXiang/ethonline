@@ -1,16 +1,13 @@
-import { chmodSync, mkdirSync } from "node:fs";
-import { dirname } from "node:path";
-import { DatabaseSync } from "node:sqlite";
+import type { DatabaseSync } from "node:sqlite";
+import { openSqliteDatabase } from "../storage/sqlite";
 import type { Application, ApplicationStore, RegistrationResult } from "./types";
 
 export class SqliteApplicationStore implements ApplicationStore {
   private readonly database: DatabaseSync;
 
   constructor(path: string) {
-    mkdirSync(dirname(path), { recursive: true, mode: 0o700 });
-    this.database = new DatabaseSync(path, { timeout: 5_000 });
+    this.database = openSqliteDatabase(path);
     try {
-      chmodSync(path, 0o600);
       this.database.exec(`
         CREATE TABLE IF NOT EXISTS applications (
           application_id TEXT PRIMARY KEY NOT NULL,
